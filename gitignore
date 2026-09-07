@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Vivado - project directories generated dynamically by the Tcl scripts
+# (see scripts/*.tcl) -- never commit these, they're huge and regenerated
+# from scratch every time.
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.runs/
+*.gen/
+*.srcs/
+*.xpr
+webtalk*.log
+webtalk*.jou
+vivado*.log
+vivado*.jou
+vivado*.str
+usage_statistics_webtalk.html
+
+# Vivado - specific project output dirs (match your gen scripts' PROJECT_NAME)
+gemm_*_prj/
+
+# Vitis
+.Xil/
+.metadata/
+vitis_ws/
+*.rpt
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor/OS misc
+*.swp
+*~
