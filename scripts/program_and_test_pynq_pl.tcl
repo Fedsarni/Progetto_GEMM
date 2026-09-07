@@ -26,26 +26,26 @@
 #
 # Prerequisite: gemm_top_pynq_pl_wrapper.bit/.ltx already built (see
 # build_pynq_pl.tcl) and the Pynq-Z1 connected via USB (JTAG + power).
- 
+
 ######################
 ## Paths / settings  #
 ######################
- 
+
 set bit_file  {./gemm_pynq_pl_prj/gemm_pynq_pl_prj.runs/impl_1/gemm_top_pynq_pl_wrapper.bit}
 set ltx_file  {./gemm_pynq_pl_prj/gemm_pynq_pl_prj.runs/impl_1/gemm_top_pynq_pl_wrapper.ltx}
- 
+
 set ELEM_WIDTH 8
 set N          8
 set M          8
 set L          8
- 
+
 set RESULT_WIDTH [expr { 2*$ELEM_WIDTH + int(ceil(log($N)/log(2))) }]
 set C_WORD_WIDTH [expr { (($RESULT_WIDTH + 7) / 8) * 8 }]
- 
+
 set MIN_VAL [expr { -(1 << ($ELEM_WIDTH-1)) }]
 set MAX_VAL [expr {  (1 << ($ELEM_WIDTH-1)) - 1 }]
 set VAL_RANGE [expr { $MAX_VAL - $MIN_VAL + 1 }]
- 
+
 set ADDR_BRAM_A   0x00000000
 set ADDR_BRAM_B   0x00001000
 set ADDR_BRAM_C   0x00002000
@@ -54,28 +54,28 @@ set ADDR_STATUS   0x00003004
 set ADDR_BASE_A   0x00003008
 set ADDR_BASE_B   0x0000300C
 set ADDR_BASE_C   0x00003010
- 
+
 set ROW_BYTES [expr { ($N * $ELEM_WIDTH) / 8 }]
 set ELEMS_PER_WORD [expr { 32 / $ELEM_WIDTH }]
 set C_BYTES 4
- 
+
 set POLL_MAX_TRIES 200
 set POLL_DELAY_MS   50
- 
+
 # Number of randomized cases run in addition to the fixed corner cases.
 # Kept low relative to simulation's NUM_RANDOM_CASES=5: every HIL
 # transaction costs real USB/JTAG round-trip time, unlike simulation.
 set NUM_RANDOM_CASES 2
- 
+
 #####################################
 ## Helpers: pack/unpack and golden  #
 #####################################
- 
+
 proc to_uN {val width} {
     set mask [expr { (1 << $width) - 1 }]
     return [expr { $val & $mask }]
 }
- 
+
 proc sign_extend {val width} {
     set sign_bit [expr { 1 << ($width - 1) }]
     set mask     [expr { (1 << $width) - 1 }]
@@ -85,7 +85,7 @@ proc sign_extend {val width} {
     }
     return $v
 }
- 
+
 proc pack_word {vals elem_width} {
     set word 0
     set k 0
@@ -96,12 +96,12 @@ proc pack_word {vals elem_width} {
     }
     return $word
 }
- 
+
 ##################################################
 ## Test case generators -- each fills mat_a/mat_b
 ## (global arrays, same convention as the SV TB)
 ##################################################
- 
+
 proc gen_case_baseline {} {
     global M N L MIN_VAL MAX_VAL VAL_RANGE
     upvar #0 mat_a mat_a
@@ -119,7 +119,7 @@ proc gen_case_baseline {} {
         }
     }
 }
- 
+
 # Both operands at max positive everywhere -- stresses the top of the
 # accumulator's dynamic range.
 proc gen_case_max_pos {} {
@@ -131,7 +131,7 @@ proc gen_case_max_pos {} {
     for {set i 0} {$i < $M} {incr i} { for {set k 0} {$k < $N} {incr k} { set mat_a($i,$k) $MAX_VAL } }
     for {set j 0} {$j < $L} {incr j} { for {set k 0} {$k < $N} {incr k} { set mat_b($j,$k) $MAX_VAL } }
 }
- 
+
 # A at max positive, B at max negative -- asymmetric two's-complement
 # extreme (|MIN_VAL| > MAX_VAL), classic overflow corner case.
 proc gen_case_max_neg {} {
@@ -143,7 +143,7 @@ proc gen_case_max_neg {} {
     for {set i 0} {$i < $M} {incr i} { for {set k 0} {$k < $N} {incr k} { set mat_a($i,$k) $MAX_VAL } }
     for {set j 0} {$j < $L} {incr j} { for {set k 0} {$k < $N} {incr k} { set mat_b($j,$k) $MIN_VAL } }
 }
- 
+
 # Alternating-sign checkerboard -- stresses sign-extension and sums with
 # heavy positive/negative cancellation.
 proc gen_case_checkerboard {} {
@@ -163,7 +163,7 @@ proc gen_case_checkerboard {} {
         }
     }
 }
- 
+
 # Sparse: everything zero except one A element and one B element sharing
 # the same k, so exactly one C element is nonzero -- isolates addressing
 # bugs from any cancellation that could mask them.
@@ -182,7 +182,7 @@ proc gen_case_sparse {} {
     set mat_b($sparse_j,$sparse_k) -30
     ;# Expected: only C[$sparse_i][$sparse_j] = 50*-30 = -1500 is nonzero.
 }
- 
+
 proc gen_case_random {} {
     global M N L MIN_VAL MAX_VAL
     upvar #0 mat_a mat_a
@@ -200,7 +200,7 @@ proc gen_case_random {} {
         }
     }
 }
- 
+
 proc compute_golden_model {} {
     global M N L
     upvar #0 mat_a mat_a
@@ -217,14 +217,14 @@ proc compute_golden_model {} {
         }
     }
 }
- 
+
 ##########################
 ## Connect and program   #
 ##########################
- 
+
 open_hw_manager
 connect_hw_server -allow_non_jtag
- 
+
 if {[catch {open_hw_target} err]} {
     puts "\[TEST\] ERROR: could not open a hardware target."
     puts "\[TEST\] Vivado said: $err"
@@ -233,7 +233,7 @@ if {[catch {open_hw_target} err]} {
     puts "\[TEST\] session (Vivado GUI or another batch run) already holding it."
     exit 1
 }
- 
+
 set dev_list [get_hw_devices]
 if {[llength $dev_list] == 0} {
     puts "\[TEST\] ERROR: hardware target opened, but no device enumerated on it."
@@ -242,7 +242,7 @@ if {[llength $dev_list] == 0} {
     close_hw_target
     exit 1
 }
- 
+
 set dev_list [get_hw_devices -filter {PROGRAM.FILE != ""}]
 if {[llength $dev_list] == 0} {
     set dev_list [get_hw_devices xc7z*]
@@ -259,12 +259,12 @@ set dev [lindex $dev_list 0]
 puts "\[TEST\] Programmable device: $dev (full chain: [get_hw_devices])"
 current_hw_device $dev
 refresh_hw_device -update_hw_probes false $dev
- 
+
 set_property PROGRAM.FILE  $bit_file $dev
 set_property PROBES.FILE   $ltx_file $dev
 program_hw_devices $dev
 refresh_hw_device $dev
- 
+
 set axi_list [get_hw_axis]
 if {[llength $axi_list] == 0} {
     puts "\[TEST\] ERROR: device programmed, but no AXI (jtag_axi_0) target found."
@@ -274,11 +274,11 @@ if {[llength $axi_list] == 0} {
 }
 set axi_target [lindex $axi_list 0]
 puts "\[TEST\] Using AXI target: $axi_target"
- 
+
 ################################################
 ## Common per-case flow (called once per case) #
 ################################################
- 
+
 proc run_current_case {case_name} {
     global axi_target M N L ROW_BYTES ELEMS_PER_WORD ELEM_WIDTH C_BYTES
     global ADDR_BRAM_A ADDR_BRAM_B ADDR_BRAM_C ADDR_CTRL ADDR_STATUS
@@ -287,9 +287,9 @@ proc run_current_case {case_name} {
     upvar #0 mat_a mat_a
     upvar #0 mat_b mat_b
     upvar #0 mat_c_expected mat_c_expected
- 
+
     compute_golden_model
- 
+
     for {set i 0} {$i < $M} {incr i} {
         for {set beat 0} {$beat < [expr {$ROW_BYTES / 4}]} {incr beat} {
             set vals {}
@@ -300,11 +300,11 @@ proc run_current_case {case_name} {
             set word [pack_word $vals $ELEM_WIDTH]
             set addr [format 0x%08X [expr { $ADDR_BRAM_A + $i*$ROW_BYTES + $beat*4 }]]
             set data [format %08X $word]
-            create_hw_axi_txn wr_a_${i}_${beat} $axi_target -type WRITE -address $addr -data $data -len 1
+            create_hw_axi_txn wr_a_${i}_${beat} $axi_target -type WRITE -address $addr -data $data -len 1 -force
             run_hw_axi wr_a_${i}_${beat}
         }
     }
- 
+
     for {set j 0} {$j < $L} {incr j} {
         for {set beat 0} {$beat < [expr {$ROW_BYTES / 4}]} {incr beat} {
             set vals {}
@@ -315,24 +315,24 @@ proc run_current_case {case_name} {
             set word [pack_word $vals $ELEM_WIDTH]
             set addr [format 0x%08X [expr { $ADDR_BRAM_B + $j*$ROW_BYTES + $beat*4 }]]
             set data [format %08X $word]
-            create_hw_axi_txn wr_b_${j}_${beat} $axi_target -type WRITE -address $addr -data $data -len 1
+            create_hw_axi_txn wr_b_${j}_${beat} $axi_target -type WRITE -address $addr -data $data -len 1 -force
             run_hw_axi wr_b_${j}_${beat}
         }
     }
- 
-    create_hw_axi_txn wr_basea $axi_target -type WRITE -address $ADDR_BASE_A -data [format %08X $ADDR_BRAM_A] -len 1
+
+    create_hw_axi_txn wr_basea $axi_target -type WRITE -address $ADDR_BASE_A -data [format %08X $ADDR_BRAM_A] -len 1 -force
     run_hw_axi wr_basea
-    create_hw_axi_txn wr_baseb $axi_target -type WRITE -address $ADDR_BASE_B -data [format %08X $ADDR_BRAM_B] -len 1
+    create_hw_axi_txn wr_baseb $axi_target -type WRITE -address $ADDR_BASE_B -data [format %08X $ADDR_BRAM_B] -len 1 -force
     run_hw_axi wr_baseb
-    create_hw_axi_txn wr_basec $axi_target -type WRITE -address $ADDR_BASE_C -data [format %08X $ADDR_BRAM_C] -len 1
+    create_hw_axi_txn wr_basec $axi_target -type WRITE -address $ADDR_BASE_C -data [format %08X $ADDR_BRAM_C] -len 1 -force
     run_hw_axi wr_basec
- 
-    create_hw_axi_txn wr_start $axi_target -type WRITE -address $ADDR_CTRL -data 00000001 -len 1
+
+    create_hw_axi_txn wr_start $axi_target -type WRITE -address $ADDR_CTRL -data 00000001 -len 1 -force
     run_hw_axi wr_start
- 
+
     set done 0
     for {set i 0} {$i < $POLL_MAX_TRIES} {incr i} {
-        create_hw_axi_txn rd_status $axi_target -type READ -address $ADDR_STATUS -len 1
+        create_hw_axi_txn rd_status $axi_target -type READ -address $ADDR_STATUS -len 1 -force
         run_hw_axi rd_status
         set status_val [get_property DATA [get_hw_axi_txns rd_status]]
         if {[expr {"0x$status_val" & 1}] == 1} {
@@ -341,17 +341,17 @@ proc run_current_case {case_name} {
         }
         after $POLL_DELAY_MS
     }
- 
+
     if {!$done} {
         puts "\[TEST\]\[$case_name\] TIMEOUT: done never went high after $POLL_MAX_TRIES polls."
         return 0
     }
- 
+
     set errors 0
     for {set i 0} {$i < $M} {incr i} {
         for {set j 0} {$j < $L} {incr j} {
             set addr [format 0x%08X [expr { $ADDR_BRAM_C + ($i*$L + $j)*$C_BYTES }]]
-            create_hw_axi_txn rd_c_${i}_${j} $axi_target -type READ -address $addr -len 1
+            create_hw_axi_txn rd_c_${i}_${j} $axi_target -type READ -address $addr -len 1 -force
             run_hw_axi rd_c_${i}_${j}
             set c_hex [get_property DATA [get_hw_axi_txns rd_c_${i}_${j}]]
             set c_uns [expr { "0x$c_hex" }]
@@ -363,7 +363,7 @@ proc run_current_case {case_name} {
             }
         }
     }
- 
+
     if {$errors == 0} {
         puts "\[TEST\]\[$case_name\] PASS - all [expr {$M*$L}] elements of C match."
     } else {
@@ -371,17 +371,17 @@ proc run_current_case {case_name} {
     }
     return $errors
 }
- 
+
 ##############################
 ## Run the full case suite   #
 ##############################
- 
+
 set total_cases 0
 set failed_cases 0
 set total_errors 0
- 
+
 puts "\[TEST\] ==== Starting coverage suite: 5 fixed corner cases + $NUM_RANDOM_CASES random cases ===="
- 
+
 foreach {gen_proc case_name} {
     gen_case_baseline     baseline
     gen_case_max_pos      max_positive_saturation
@@ -395,7 +395,7 @@ foreach {gen_proc case_name} {
     incr total_errors $errs
     if {$errs != 0} { incr failed_cases }
 }
- 
+
 for {set r 0} {$r < $NUM_RANDOM_CASES} {incr r} {
     gen_case_random
     set errs [run_current_case "random_$r"]
@@ -403,14 +403,15 @@ for {set r 0} {$r < $NUM_RANDOM_CASES} {incr r} {
     incr total_errors $errs
     if {$errs != 0} { incr failed_cases }
 }
- 
+
 puts "\[TEST\] ==== Coverage suite summary ===="
 puts "\[TEST\] Cases run: $total_cases, cases failed: $failed_cases, total element mismatches: $total_errors"
- 
+
 if {$failed_cases == 0} {
     puts "\[TEST\] OVERALL PASS - all $total_cases test cases passed."
 } else {
     puts "\[TEST\] OVERALL FAIL - $failed_cases of $total_cases test cases failed."
     exit 1
 }
+
  
