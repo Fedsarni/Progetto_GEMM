@@ -1,0 +1,47 @@
+name: GEMM PL-only CI (Pynq-Z1)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # allows manual trigger from the Actions tab
+
+env:
+  VIVADO_EXEC: "C:\\AMDDesignTools\\2025.2\\Vivado\\bin\\vivado.bat"
+
+jobs:
+  # --- STEP 1: build the bitstream (synth + impl) ---
+  build:
+    runs-on: [self-hosted, pynq-z1]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build bitstream (PL-only, Pynq-Z1)
+        run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source scripts/build_pynq_pl.tcl'
+      - name: Upload bitstream artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitstream
+          path: |
+            **/*.bit
+            **/*.ltx
+
+  # --- STEP 2: RTL simulation ---
+  simulate:
+    needs: build
+    runs-on: [self-hosted, pynq-z1]
+    steps:
+      - uses: actions/checkout@v4
+      - name: RTL simulation (AXI VIP golden model)
+        run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source scripts/build.tcl'
+
+  # --- STEP 3: Hardware-in-the-Loop test ---
+  hil_test:
+    needs: simulate
+    runs-on: [self-hosted, pynq-z1]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download bitstream artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bitstream
+      - name: HIL test (JTAG-to-AXI, board Pynq-Z1)
+        run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source scripts/program_and_test_pynq_pl.tcl'
