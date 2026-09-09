@@ -1,4 +1,4 @@
-name: GEMM PL-only CI (Pynq-Z1)
+name: GEMM CI (Pynq-Z1) — PL-only & PS+PL
 
 on:
   push:
@@ -9,6 +9,8 @@ env:
   VIVADO_EXEC: "C:\\AMDDesignTools\\2025.2\\Vivado\\bin\\vivado.bat"
 
 jobs:
+  # ======================= PL-only =======================
+
   # --- STEP 1: build the bitstream (synth + impl) ---
   build:
     runs-on: [self-hosted, pynq-z1]
@@ -45,3 +47,34 @@ jobs:
           name: bitstream
       - name: HIL test (JTAG-to-AXI, board Pynq-Z1)
         run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source scripts/program_and_test_pynq_pl.tcl'
+
+  # ======================= PS+PL =======================
+
+  # --- STEP 4: build the PS+PL bitstream + hardware platform (.xsa) ---
+  build_ps_pl:
+    runs-on: [self-hosted, pynq-z1]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build bitstream + hardware platform (PS+PL, Pynq-Z1)
+        run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source scripts/build_ps_pl.tcl'
+      - name: Upload PS+PL artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitstream-ps-pl
+          path: |
+            **/*.bit
+            gemm_ps_pl.xsa
+
+  # --- STEP 5: PS+PL Hardware-in-the-Loop test (BSP + software + board) ---
+  hil_test_ps_pl:
+    needs: build_ps_pl
+    runs-on: [self-hosted, pynq-z1]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download PS+PL artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bitstream-ps-pl
+      - name: HIL test (PS bare-metal, board Pynq-Z1)
+        shell: powershell
+        run: '.\scripts\program_and_test_ps_pl.ps1'
