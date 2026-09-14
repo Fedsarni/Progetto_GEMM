@@ -8,8 +8,9 @@ set PROJECT_NAME gemm_pynq_pl_prj
 # Target FPGA Device: Zynq-7000 (Pynq-Z1 board)
 set PART xc7z020clg400-1
 
-set SRC_DIR ../src/
-set SCRIPTS_DIR ../scripts/
+set TIER1_DIR ../tier1/
+set SHARED_DIR ../shared/
+set PL_TIER2_DIR ../pl_only/tier2/
 set XDC_DIR ../xdc/
 set TOP_LEVEL gemm_top_pynq_pl_wrapper
 
@@ -23,14 +24,14 @@ set report_dir "$project_dir/reports"
 exec mkdir -p reports
 
 set src_file_list [ list \
-    $SRC_DIR/gemm_axi_ip_components_pkg.vhd \
-    $SRC_DIR/gemm_top.vhd \
-    $SRC_DIR/gemm_controller.vhd \
-    $SRC_DIR/lsu.vhd \
-    $SRC_DIR/dot_product_optimized.vhd \
-    $SRC_DIR/axi4lite_ctrl_regs.vhd \
-    $SRC_DIR/axi_master_engine.vhd \
-    $SRC_DIR/gemm_top_pynq_pl_wrapper.vhd \
+    $SHARED_DIR/gemm_axi_ip_components_pkg.vhd \
+    $TIER1_DIR/gemm_top.vhd \
+    $TIER1_DIR/gemm_controller.vhd \
+    $TIER1_DIR/lsu.vhd \
+    $TIER1_DIR/dot_product_optimized.vhd \
+    $TIER1_DIR/axi4lite_ctrl_regs.vhd \
+    $TIER1_DIR/axi_master_engine.vhd \
+    $PL_TIER2_DIR/gemm_top_pynq_pl_wrapper.vhd \
 ]
 add_files -norecurse -fileset [current_fileset] $src_file_list
 set_property FILE_TYPE VHDL [get_files *.vhd]
@@ -41,7 +42,7 @@ add_files -norecurse -fileset [current_fileset -constrset] [list "$XDC_DIR/gemm_
 set_property top $TOP_LEVEL [current_fileset]
 
 # Generate PL IP cores
-source $SCRIPTS_DIR/ip/gen_ip_pynq_pl.tcl
+source $PL_TIER2_DIR/gen_ip_pynq_pl.tcl
 
 update_compile_order -fileset sources_1
 

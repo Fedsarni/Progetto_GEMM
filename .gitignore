@@ -31,6 +31,11 @@ gemm_*_prj/
 vitis_ws/
 *.rpt
 
+# Runtime & Build artifacts
+NA/
+dfx_runtime.txt
+*.xsas
+
 # Windows
 Thumbs.db
 Desktop.ini

@@ -14,12 +14,12 @@ set part       xc7z020clg400-1
 set board_part {www.digilentinc.com:pynq-z1:part0:1.0}
 
 set gemm_srcs [list \
-    src/gemm_top.vhd \
-    src/gemm_controller.vhd \
-    src/lsu.vhd \
-    src/dot_product_optimized.vhd \
-    src/axi4lite_ctrl_regs.vhd \
-    src/axi_master_engine.vhd \
+    tier1/gemm_top.vhd \
+    tier1/gemm_controller.vhd \
+    tier1/lsu.vhd \
+    tier1/dot_product_optimized.vhd \
+    tier1/axi4lite_ctrl_regs.vhd \
+    tier1/axi_master_engine.vhd \
 ]
 
 #############################################
@@ -38,10 +38,10 @@ update_compile_order -fileset sources_1
 #    (gemm_top imported as RTL module ref,  #
 #    crossbar/BRAM as native BD IP, PS7 +   #
 #    AXI3->AXI4LITE protocol converter --   #
-#    see scripts/hw/bd/gen_bd_ps.tcl)       #
+#    see ps_pl/tier2/gen_bd_ps.tcl)         #
 #############################################
 
-source scripts/bd/gen_bd_ps.tcl
+source ps_pl/tier2/gen_bd_ps.tcl
 
 #############################################
 # 3. Synthesis, implementation, bitstream   #

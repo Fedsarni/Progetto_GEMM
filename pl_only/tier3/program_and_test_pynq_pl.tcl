@@ -20,7 +20,7 @@
 # instead of a false-green checkmark.
 #
 # Usage: from Vivado Tcl Console (project open or not, doesn't matter),
-#   source scripts/program_and_test_pynq_pl.tcl
+#   source pl_only/tier3/program_and_test_pynq_pl.tcl
 #
 # Prerequisite: gemm_top_pynq_pl_wrapper.bit/.ltx already built (see
 # build_pynq_pl.tcl) and the Pynq-Z1 connected via USB (JTAG + power).

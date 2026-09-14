@@ -62,18 +62,18 @@ if (-not (Test-Path "$bspLib\libxil.a")) {
 # --- 2. Compile software (arm-none-eabi-gcc) ----------------------------
 $commonFlags = "-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard"
 
-& $GCC -c $commonFlags.Split(" ") -I $bspInclude .\sw\main.c -o .\sw\main.o
+& $GCC -c $commonFlags.Split(" ") -I $bspInclude .\ps_pl\tier3\main.c -o .\ps_pl\tier3\main.o
 if ($LASTEXITCODE -ne 0) { Fail "Compiling main.c failed" }
 
-& $GCC -c $commonFlags.Split(" ") -I $bspInclude .\sw\gemm.c -o .\sw\gemm.o
+& $GCC -c $commonFlags.Split(" ") -I $bspInclude .\ps_pl\tier3\gemm.c -o .\ps_pl\tier3\gemm.o
 if ($LASTEXITCODE -ne 0) { Fail "Compiling gemm.c failed" }
 
 $linkArgs = @(
     "-mcpu=cortex-a9", "-mfpu=vfpv3", "-mfloat-abi=hard", "-nostartfiles",
-    "-Wl,-T", "-Wl,.\sw\lscript.ld",
+    "-Wl,-T", "-Wl,.\ps_pl\tier3\lscript.ld",
     "-L", $bspLib,
-    "-o", ".\sw\main.elf",
-    ".\sw\main.o", ".\sw\gemm.o",
+    "-o", ".\ps_pl\tier3\main.elf",
+    ".\ps_pl\tier3\main.o", ".\ps_pl\tier3\gemm.o",
     "-Wl,--start-group", "-lxil", "-lgcc", "-lc", "-Wl,--end-group"
 )
 & $GCC @linkArgs

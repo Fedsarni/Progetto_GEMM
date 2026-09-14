@@ -1,5 +1,4 @@
 # Author: Federica Sarnataro
-# gen_ip_pynq_pl.tcl
 # Description:
 #   Generates the Xilinx IP (.xci) for Pynq-Z1 PL-Only Target:
 #   jtag_axi_0, clk_wiz_0, axi_crossbar_0, axi_bram_ctrl_0/1/2 + blk_mem_gen_0/1/2.
@@ -19,7 +18,7 @@
 # Shared BRAM/crossbar sizing (identical to the PS+PL target) -- see
 # scripts/bd/tier2_config.tcl. Mechanism here is unchanged: still
 # standalone .xci IP cores, no block design.
-source [file join [file dirname [info script]] .. bd tier2_config.tcl]
+source [file join [file dirname [info script]] .. .. shared tier2_config.tcl]
 
 proc generate_ip_run {ip_name} {
     set prj_name [current_project]
@@ -39,11 +38,8 @@ array set bram_depth [array get gemm_bram_depth]
 ########################
 # clk_wiz_0 (125MHz -> 50MHz)
 ########################
-# First hardware run at 100MHz failed timing on this same Tier-1 design
-# (WNS=-2.268ns, critical path inside DP_INST / dot_product_optimized --
-# see build_pynq_pl.log). Same symptom, same root cause, and same fix
-# already proven on the Arty PL-only build (there: WNS=-2.781ns @ 100MHz,
-# fixed by dropping to 50MHz -- see gen_bd_hw.tcl's comment).
+# 100MHz failed timing on this Tier 1 design (critical path inside
+# dot_product_optimized) -- 50MHz fixes it.
 #
 # The output port keeps the name clk_100MHz_o (matches clk_wiz_0's port
 # declaration in gemm_top_pynq_pl_wrapper.vhd) even though it now actually
@@ -74,18 +70,22 @@ generate_ip_run "jtag_axi_0"
 # axi_crossbar_0
 ########################
 create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi_crossbar_0
+set gemm_addr_a    [format {0x%08X} $gemm_addr_offset_a]
+set gemm_addr_b    [format {0x%08X} $gemm_addr_offset_b]
+set gemm_addr_c    [format {0x%08X} $gemm_addr_offset_c]
+set gemm_addr_ctrl [format {0x%08X} $gemm_addr_offset_ctrl]
 set_property -dict [list \
     CONFIG.NUM_SI $gemm_crossbar_num_si \
     CONFIG.NUM_MI $gemm_crossbar_num_mi \
     CONFIG.PROTOCOL {AXI4LITE} \
     CONFIG.ADDR_WIDTH {32} \
-    CONFIG.M00_A00_BASE_ADDR {0x00000000} \
+    CONFIG.M00_A00_BASE_ADDR $gemm_addr_a \
     CONFIG.M00_A00_ADDR_WIDTH {12} \
-    CONFIG.M01_A00_BASE_ADDR {0x00001000} \
+    CONFIG.M01_A00_BASE_ADDR $gemm_addr_b \
     CONFIG.M01_A00_ADDR_WIDTH {12} \
-    CONFIG.M02_A00_BASE_ADDR {0x00002000} \
+    CONFIG.M02_A00_BASE_ADDR $gemm_addr_c \
     CONFIG.M02_A00_ADDR_WIDTH {12} \
-    CONFIG.M03_A00_BASE_ADDR {0x00003000} \
+    CONFIG.M03_A00_BASE_ADDR $gemm_addr_ctrl \
     CONFIG.M03_A00_ADDR_WIDTH {12} \
 ] [get_ips axi_crossbar_0]
 generate_ip_run "axi_crossbar_0"

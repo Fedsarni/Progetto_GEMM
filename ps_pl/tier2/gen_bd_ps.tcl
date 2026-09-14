@@ -1,4 +1,4 @@
-# Author: Federica
+# Author: Federica Sarnataro
 # Description:
 #   Creates the block design for the GEMM PS+PL project (Pynq-Z1).
 #
@@ -20,7 +20,7 @@
 #   Mechanism here is unchanged from before -- still a native block
 #   design, same topology, only the numbers now come from one place.
 
-source [file join [file dirname [info script]] tier2_config.tcl]
+source [file join [file dirname [info script]] .. .. shared tier2_config.tcl]
 
 set prj_name [current_project]
 set bd_name $prj_name

@@ -38,41 +38,46 @@ directories (`gemm_*_prj/`, `workspace/`) and generated artifacts
 (`*.xsa`) are ignored -- projects are dynamically generated from the Tcl
 scripts on every run.
 
-- **`src/`**: VHDL sources.
-  * `gemm_top.vhd` and its sub-modules (`gemm_controller.vhd`, `lsu.vhd`,
-    `dot_product_optimized.vhd`, `axi4lite_ctrl_regs.vhd`,
-    `axi_master_engine.vhd`) -- **Tier 1**, the core design under test,
-    identical across every target and platform.
+Following the guide's "Three-tier Verification Architecture", the layout
+makes the tier structure explicit in the folder names: Tier 1 (the DUT)
+is shared and lives on its own, outside any target-specific folder; each
+target/platform (simulation, PL-only, PS+PL) has its own `tier2/` and
+`tier3/` subfolders.
+
+- **`tier1/`**: `gemm_top.vhd` and its sub-modules (`gemm_controller.vhd`,
+  `lsu.vhd`, `dot_product_optimized.vhd`, `axi4lite_ctrl_regs.vhd`,
+  `axi_master_engine.vhd`) -- the core design under test, identical and
+  never duplicated across every target and platform.
+- **`shared/`**: values/components genuinely reused across two or more
+  targets, but not part of the DUT itself:
+  * `tier2_config.tcl` -- BRAM sizing, crossbar port count, and address
+    offsets, read by all three targets' Tier 2 generation scripts.
   * `gemm_axi_ip_components_pkg.vhd` -- shared VHDL component
-    declarations (AXI crossbar, BRAM controllers) reused by the
+    declarations (AXI crossbar, BRAM controllers), reused by the
     simulation and PL-only Tier 2 wrappers.
-  * `gemm_top_sim_wrapper.vhd`, `gemm_top_pynq_pl_wrapper.vhd` -- **Tier
-    2** for simulation and PL-only (see `Architecture` below). The PS+PL
-    target does not need a VHDL wrapper file at all: `gemm_top` is
-    imported directly as an RTL module reference inside a native Vivado
-    block design (see `scripts/bd/gen_bd_ps.tcl`).
-- **`sim/`** (or `tb/`): SystemVerilog testbench (`gemm_axi_vip_tb.sv`),
-  using the AXI Verification IP (VIP) as the golden-model driver --
-  **Tier 3** for simulation. Shared by both platforms, since it only
-  exercises Tier 1.
-- **`sw/`**: bare-metal C sources for the PS+PL target's Tier 3
-  (`main.c`, `gemm.c`/`gemm.h`, `lscript.ld`) -- the PS-side stimuli
-  generator and HIL test suite, compiled with `arm-none-eabi-gcc` (no
-  Vitis IDE/`app create` involved).
-- **`scripts/`**: Modular Tcl (and PowerShell, for PS+PL) automation --
-  generate IPs, build the project, run simulation, build the bitstream,
-  run the HIL test, for both platforms.
-  * PL-only: `build_pynq_pl.tcl`, `ip/gen_ip_pynq_pl.tcl` (standalone
-    IP generation), `program_and_test_pynq_pl.tcl`.
-  * PS+PL: `build_ps_pl.tcl` (project + block design + bitstream + `.xsa`
-    export), `bd/gen_bd_ps.tcl` (the block design itself: PS7 + AXI3→
-    AXI4-Lite protocol converter + crossbar + BRAMs + `gemm_top`),
-    `program_and_test_ps_pl.ps1` (end-to-end HIL: BSP generation,
-    software build, board programming, UART result capture).
-  * `bd/tier2_config.tcl`: BRAM sizing, crossbar port count, and address
-    offsets shared between the PL-only and PS+PL IP/BD generation
-    scripts -- the only genuinely duplicated numbers between the two
-    targets, kept in one place (mechanism stays different per target).
+- **`simulation/`**:
+  * `tier2/gemm_top_sim_wrapper.vhd`, `tier2/gen_ip_sim.tcl` -- DUT + AXI
+    VIP + crossbar + BRAM A/B/C, hand-wired VHDL.
+  * `tier3/gemm_axi_vip_tb.sv` -- SystemVerilog testbench, the Tier 3
+    stimuli generator for simulation. Shared by both hardware platforms,
+    since it only exercises Tier 1.
+- **`pl_only/`**:
+  * `tier2/gemm_top_pynq_pl_wrapper.vhd`, `tier2/gen_ip_pynq_pl.tcl` --
+    DUT + JTAG-to-AXI Master + crossbar + BRAM A/B/C.
+  * `tier3/program_and_test_pynq_pl.tcl` -- host-side Tcl script, drives
+    the JTAG-to-AXI Master via Vivado Hardware Manager.
+- **`ps_pl/`**:
+  * `tier2/gen_bd_ps.tcl` -- the block design itself: PS7 + AXI3→
+    AXI4-Lite protocol converter + crossbar + BRAMs + `gemm_top`
+    (imported as a bare RTL module reference, no VHDL wrapper needed).
+  * `tier3/main.c`, `tier3/gemm.c`/`gemm.h`, `tier3/lscript.ld` --
+    bare-metal C sources, compiled with `arm-none-eabi-gcc` (no Vitis
+    IDE/`app create` involved), and `tier3/program_and_test_ps_pl.ps1`
+    -- end-to-end HIL automation: BSP generation, software build, board
+    programming, UART result capture.
+- **`scripts/`**: top-level build orchestrators (not tier/target-specific
+  themselves, they just call into the folders above): `build.tcl`
+  (simulation), `build_pynq_pl.tcl` (PL-only), `build_ps_pl.tcl` (PS+PL).
 - **`xdc/`**: Physical constraints for the Pynq-Z1 (clock, reset) --
   PL-only only; PS+PL needs no physical pin constraints, all
   communication is internal AXI between PS and PL.
@@ -110,15 +115,15 @@ driven:
 3. **Tier 3 -- Stimuli generation**: drives Tier 2 and checks results
    against a golden model computed independently in the same language as
    the driver:
-   - Simulation: `sim/gemm_axi_vip_tb.sv` (SystemVerilog, drives the AXI
-     VIP directly).
-   - PL-only HIL: `scripts/program_and_test_pynq_pl.tcl` (Tcl, drives the
-     JTAG-to-AXI Master via Vivado Hardware Manager).
-   - PS+PL HIL: `sw/main.c` (bare-metal C, running on the Zynq's own ARM
-     Cortex-A9) -- generates stimuli by writing directly to memory-mapped
-     AXI addresses (`volatile` pointer stores), starts the computation,
-     polls for completion, and checks the result, printing progress over
-     UART.
+   - Simulation: `simulation/tier3/gemm_axi_vip_tb.sv` (SystemVerilog,
+     drives the AXI VIP directly).
+   - PL-only HIL: `pl_only/tier3/program_and_test_pynq_pl.tcl` (Tcl,
+     drives the JTAG-to-AXI Master via Vivado Hardware Manager).
+   - PS+PL HIL: `ps_pl/tier3/main.c` (bare-metal C, running on the
+     Zynq's own ARM Cortex-A9) -- generates stimuli by writing directly
+     to memory-mapped AXI addresses (`volatile` pointer stores), starts
+     the computation, polls for completion, and checks the result,
+     printing progress over UART.
 
 All three Tier 3 drivers run the **same test suite**: a deterministic
 baseline case plus targeted corner cases (maximum positive/negative
@@ -156,7 +161,7 @@ vivado -mode batch -source scripts/build_pynq_pl.tcl
 ### PL-only: Hardware-in-the-Loop test
 
 ```
-vivado -mode batch -source scripts/program_and_test_pynq_pl.tcl
+vivado -mode batch -source pl_only/tier3/program_and_test_pynq_pl.tcl
 ```
 
 Programs the bitstream onto the Pynq-Z1 and runs the full test suite over
@@ -174,7 +179,7 @@ the BSP/software build step below.
 ### PS+PL: Hardware-in-the-Loop test
 
 ```
-powershell -ExecutionPolicy Bypass -File scripts/program_and_test_ps_pl.ps1
+powershell -ExecutionPolicy Bypass -File ps_pl/tier3/program_and_test_ps_pl.ps1
 ```
 
 Generates the BSP from `gemm_ps_pl.xsa` (no Vitis IDE involved),

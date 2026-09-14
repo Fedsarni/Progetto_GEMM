@@ -7,11 +7,10 @@
 #   (gemm_top_sim_wrapper.vhd) instead of on the IP Integrator canvas, so
 #   the Tier 2 wrapper is a real, reusable, diffable RTL file.
 #
-#   Address map (must match gemm_axi_vip_tb.sv and gemm_top_sim_wrapper.vhd):
-#     M00 0x0000_0000 - 0x0000_0FFF  BRAM A
-#     M01 0x0000_1000 - 0x0000_1FFF  BRAM B
-#     M02 0x0000_2000 - 0x0000_2FFF  BRAM C
-#     M03 0x0000_3000 - 0x0000_3FFF  gemm_top S_AXI (ctrl registers)
+#   BRAM sizing, crossbar port count, and address offsets are shared with
+#   the PL-only and PS+PL targets via scripts/bd/tier2_config.tcl.
+
+source [file join [file dirname [info script]] .. .. shared tier2_config.tcl]
 
 # Utility function to generate IP runs and artifacts.
 proc generate_ip_run {ip_name} {
@@ -36,14 +35,8 @@ proc generate_ip_run {ip_name} {
 
 set_property target_language VHDL [current_project]
 
-# BRAM depth (32-bit words). Uniform 1024 words / 4 KiB for A, B and C:
-# axi_bram_ctrl's own MEM_DEPTH is clamped to a minimum of 1024 anyway
-# (see below), so there's no benefit to keeping blk_mem_gen artificially
-# smaller (16/64) -- and that odd small-depth + byte-write-enable
-# combination is a plausible trigger for the XSim kernel crash seen in
-# blk_mem_gen's behavioural model generator. 1024 words is a completely
-# standard, well-tested BRAM configuration.
-array set bram_depth {a 1024 b 1024 c 1024}
+# BRAM depth (32-bit words), shared with the other targets.
+array set bram_depth [array get gemm_bram_depth]
 
 ########################
 # axi_vip_master_0     #
@@ -62,18 +55,22 @@ generate_ip_run "axi_vip_master_0"
 ########################
 # 2 SI (axi_vip_master_0, gemm_top.m_axi) -> 4 MI (BRAM A/B/C, gemm_top.s_axi)
 create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi_crossbar_0
+set gemm_addr_a    [format {0x%08X} $gemm_addr_offset_a]
+set gemm_addr_b    [format {0x%08X} $gemm_addr_offset_b]
+set gemm_addr_c    [format {0x%08X} $gemm_addr_offset_c]
+set gemm_addr_ctrl [format {0x%08X} $gemm_addr_offset_ctrl]
 set_property -dict [list \
-    CONFIG.NUM_SI {2} \
-    CONFIG.NUM_MI {4} \
+    CONFIG.NUM_SI $gemm_crossbar_num_si \
+    CONFIG.NUM_MI $gemm_crossbar_num_mi \
     CONFIG.PROTOCOL {AXI4LITE} \
     CONFIG.ADDR_WIDTH {32} \
-    CONFIG.M00_A00_BASE_ADDR {0x00000000} \
+    CONFIG.M00_A00_BASE_ADDR $gemm_addr_a \
     CONFIG.M00_A00_ADDR_WIDTH {12} \
-    CONFIG.M01_A00_BASE_ADDR {0x00001000} \
+    CONFIG.M01_A00_BASE_ADDR $gemm_addr_b \
     CONFIG.M01_A00_ADDR_WIDTH {12} \
-    CONFIG.M02_A00_BASE_ADDR {0x00002000} \
+    CONFIG.M02_A00_BASE_ADDR $gemm_addr_c \
     CONFIG.M02_A00_ADDR_WIDTH {12} \
-    CONFIG.M03_A00_BASE_ADDR {0x00003000} \
+    CONFIG.M03_A00_BASE_ADDR $gemm_addr_ctrl \
     CONFIG.M03_A00_ADDR_WIDTH {12} \
 ] [get_ips axi_crossbar_0]
 generate_ip_run "axi_crossbar_0"
@@ -81,8 +78,6 @@ generate_ip_run "axi_crossbar_0"
 ########################################
 # axi_bram_ctrl_0/1/2 + blk_mem_gen_0/1/2 (A / B / C)
 ########################################
-# Same BRAM controller/memory pair used for the PL-only target -- only
-# how they're generated changes (create_ip here, not create_bd_cell).
 foreach idx {0 1 2} mat {a b c} {
     create_ip -name axi_bram_ctrl -vendor xilinx.com -library ip -version 4.1 \
         -module_name axi_bram_ctrl_$idx
