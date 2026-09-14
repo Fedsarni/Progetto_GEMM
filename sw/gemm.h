@@ -1,4 +1,5 @@
 /*
+ * Author: Federica Sarnataro
  * gemm.h
  *
  * Tier 3 driver for the GEMM accelerator (8x8, signed int8 elements,

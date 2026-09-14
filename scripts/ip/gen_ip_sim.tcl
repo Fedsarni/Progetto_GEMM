@@ -1,15 +1,11 @@
-# Author: Federica
+# Author: Federica Sarnataro
 # Description:
 #   Generates the Xilinx IP (.xci) instantiated by gemm_top_sim_wrapper.vhd:
 #   axi_vip_master_0, axi_crossbar_0, axi_bram_ctrl_0/1/2 + blk_mem_gen_0/1/2.
 #
-#   Replaces gen_bd.tcl (block design): the IP are still Xilinx-generated,
-#   but wired by hand in VHDL (gemm_top_sim_wrapper.vhd) instead of on the
-#   IP Integrator canvas, so the Tier 2 wrapper is a real, reusable,
-#   diffable RTL file, as in the "Three-tier Verification Architecture"
-#   section of the RTL guide (design_top_sim_wrapper example) and in
-#   Vincenzo's basic_ips_top_arty_A7.vhd / gen_ips.tcl reference (which
-#   generates axi_crossbar standalone the same way, via create_ip).
+#   The IP are Xilinx-generated but wired by hand in VHDL
+#   (gemm_top_sim_wrapper.vhd) instead of on the IP Integrator canvas, so
+#   the Tier 2 wrapper is a real, reusable, diffable RTL file.
 #
 #   Address map (must match gemm_axi_vip_tb.sv and gemm_top_sim_wrapper.vhd):
 #     M00 0x0000_0000 - 0x0000_0FFF  BRAM A
@@ -17,8 +13,7 @@
 #     M02 0x0000_2000 - 0x0000_2FFF  BRAM C
 #     M03 0x0000_3000 - 0x0000_3FFF  gemm_top S_AXI (ctrl registers)
 
-# Utility function to generate IP runs and artifacts (same helper as
-# Vincenzo's gen_ips.tcl)
+# Utility function to generate IP runs and artifacts.
 proc generate_ip_run {ip_name} {
     set prj_name [current_project]
     set prj_path "[get_property directory [current_project]]"
@@ -86,8 +81,8 @@ generate_ip_run "axi_crossbar_0"
 ########################################
 # axi_bram_ctrl_0/1/2 + blk_mem_gen_0/1/2 (A / B / C)
 ########################################
-# Same pair used by gen_bd.tcl (Single_Port_RAM behind axi_bram_ctrl, 32-bit
-# data): only how they're generated changes (create_ip, not create_bd_cell).
+# Same BRAM controller/memory pair used for the PL-only target -- only
+# how they're generated changes (create_ip here, not create_bd_cell).
 foreach idx {0 1 2} mat {a b c} {
     create_ip -name axi_bram_ctrl -vendor xilinx.com -library ip -version 4.1 \
         -module_name axi_bram_ctrl_$idx

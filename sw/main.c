@@ -1,4 +1,5 @@
 /*
+ * Author: Federica Sarnataro
  * main.c
  *
  * Tier 3 HIL test suite for the 8x8 int8 GEMM on Pynq-Z1 (PS+PL).
@@ -17,7 +18,6 @@
  */
 
 #include <stdlib.h>
-#include "platform.h"
 #include "xil_printf.h"
 #include "gemm.h"
 
@@ -162,8 +162,6 @@ static void run_current_case(const char *case_name) {
 }
 
 int main() {
-    init_platform();
-
     print("GEMM PS+PL HIL test suite -- Pynq-Z1\r\n");
     print("==== Starting coverage suite: 5 fixed corner cases + 2 random cases ====\r\n\r\n");
 
@@ -190,7 +188,4 @@ int main() {
     while (1) {
         /* done */
     }
-
-    cleanup_platform();
-    return 0;
 }

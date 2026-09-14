@@ -1,4 +1,4 @@
-# Author: Federica
+# Author: Federica Sarnataro
 # Description:
 #   Create a Vivado project for GEMM - SIMULATION VERSION (AXI VIP).
 #   No bitstream: RTL elaboration and behavioural simulation only.

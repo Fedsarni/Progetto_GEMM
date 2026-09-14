@@ -1,20 +1,14 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Author: Federica Sarnataro
 -- 
 -- Design Name: 
 -- Module Name: lsu - Behavioral
--- Project Name: 
--- Target Devices: 
 -- Tool Versions: 
 -- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
+-- Load/Store Unit: reads A/B matrix elements from BRAM one at a time
+-- and feeds them to the dot-product datapath; writes each computed
+-- result back to the output BRAM at the correct address.
+
 ----------------------------------------------------------------------------------
 
 

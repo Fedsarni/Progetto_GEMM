@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Author: Federica
+-- Author: Federica Sarnataro 
 -- Module Name: gemm_top_sim_wrapper - structural
 -- Description:
 --   [Tier 2] Simulation test wrapper for gemm_top: DUT + AXI VIP (master) +
@@ -7,26 +7,11 @@
 --   Architecture" section of the internal RTL Coding/Design/Verification
 --   guide.
 --
---   IP instantiation uses "component ... end component" (implicit/
---   default binding), NOT "entity work.X": in this project, after many
---   rebuilds of the same project/IP-instance names, explicit "entity
---   work.X" binding triggered a reproducible XSim kernel crash inside
---   blk_mem_gen's behavioural simulation model (FATAL_ERROR at
---   blk_mem_gen_v8_4.v:3300, Time 0 / Iteration 0), while the same
---   design elaborates and simulates correctly with component-based
---   default binding. Root cause not fully confirmed, but suspected: the
---   "work" library may have held a stale/mismatched compiled entity from
---   an earlier IP configuration that explicit "entity work.X" bound to
---   directly, while default binding re-resolves through the current
---   compile order instead. gemm_top itself is still instantiated via
---   "entity work.gemm_top" (that one caused no issues -- it's plain
---   project RTL, not Tcl-generated IP).
---
--- Revision:
--- Revision 0.02 - Reverted IP instantiation to component-based binding
---                 (fixes XSim kernel crash). Fixed VIP hierarchical path
---                 case (DUT.AXI_VIP_INST, not DUT.axi_vip_inst).
--- Revision 0.01 - File Created
+-- IP instantiation uses "component ... end component" (implicit
+-- binding), NOT "entity work.X" -- explicit binding on Tcl-generated IP
+-- triggers a reproducible XSim kernel crash (FATAL_ERROR inside
+-- blk_mem_gen's simulation model). gemm_top itself is still instantiated
+-- via "entity work.gemm_top" (plain project RTL, unaffected).
 ----------------------------------------------------------------------------------
 
 library ieee;

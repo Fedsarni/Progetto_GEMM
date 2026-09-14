@@ -1,5 +1,5 @@
+# Author: Federica Sarnataro
 # program_and_test_pynq_pl.tcl
-# Author: Federica
 #
 # [Tier 3] Stimuli generation for the Pynq-Z1 PL-only target (see the
 # internal RTL Coding/Design/Verification guide's "Three-tier Verification
@@ -17,9 +17,7 @@
 # process finish with exit code 0 -- which GitHub Actions (and any CI)
 # reads as SUCCESS regardless of what actually happened. `exit 1` makes
 # the Vivado process itself fail, which is what CI needs to see a red X
-# instead of a false-green checkmark. (This bug was caught the first time
-# the CI ran with the board disconnected: the job showed green even though
-# the test never actually ran.)
+# instead of a false-green checkmark.
 #
 # Usage: from Vivado Tcl Console (project open or not, doesn't matter),
 #   source scripts/program_and_test_pynq_pl.tcl

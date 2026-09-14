@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Author: Federica
+-- Author: Federica Sarnataro
 -- Package Name: gemm_axi_ip_components_pkg
 -- Description:
 --   Shared component declarations (and matching address-width constants) for
@@ -17,15 +17,10 @@
 --   clock/reset generation logic.
 --
 --   NOTE on binding style: these are "component ... end component"
---   declarations (default binding), NOT "entity work.X". This matches
---   gemm_top_sim_wrapper's Revision 0.02 note: explicit "entity work.X"
---   binding on Tcl-generated IP reproducibly crashed the XSim kernel inside
---   blk_mem_gen's behavioural model after repeated project/IP rebuilds,
---   while component-based default binding did not. Keep this style for any
---   IP declared here.
---
--- Revision:
--- Revision 0.01 - File Created (factored out of gemm_top_sim_wrapper.vhd)
+--   declarations (default binding), NOT "entity work.X" -- explicit
+--   "entity work.X" binding on Tcl-generated IP triggers a reproducible
+--   XSim kernel crash inside blk_mem_gen's behavioural model. Keep this
+--   style for any IP declared here.
 ----------------------------------------------------------------------------------
 
 library ieee;

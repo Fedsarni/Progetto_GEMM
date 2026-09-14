@@ -1,4 +1,5 @@
-# Author: Federica
+# Author: Federica Sarnataro
+# gen_ip_pynq_pl.tcl
 # Description:
 #   Generates the Xilinx IP (.xci) for Pynq-Z1 PL-Only Target:
 #   jtag_axi_0, clk_wiz_0, axi_crossbar_0, axi_bram_ctrl_0/1/2 + blk_mem_gen_0/1/2.
@@ -15,6 +16,11 @@
 #   a nonexistent property name fails loudly, but a *renamed-but-similar*
 #   property may not).
 
+# Shared BRAM/crossbar sizing (identical to the PS+PL target) -- see
+# scripts/bd/tier2_config.tcl. Mechanism here is unchanged: still
+# standalone .xci IP cores, no block design.
+source [file join [file dirname [info script]] .. bd tier2_config.tcl]
+
 proc generate_ip_run {ip_name} {
     set prj_name [current_project]
     set prj_path "[get_property directory [current_project]]"
@@ -28,17 +34,16 @@ proc generate_ip_run {ip_name} {
 }
 
 set_property target_language VHDL [current_project]
-array set bram_depth {a 1024 b 1024 c 1024}
+array set bram_depth [array get gemm_bram_depth]
 
 ########################
 # clk_wiz_0 (125MHz -> 50MHz)
 ########################
-# NOTE: first hardware run at 100MHz failed timing on this same Tier-1
-# design (WNS=-2.268ns, critical path inside DP_INST / dot_product_optimized
-# -- see build_pynq_pl.log). Same symptom, same root cause, and same fix
+# First hardware run at 100MHz failed timing on this same Tier-1 design
+# (WNS=-2.268ns, critical path inside DP_INST / dot_product_optimized --
+# see build_pynq_pl.log). Same symptom, same root cause, and same fix
 # already proven on the Arty PL-only build (there: WNS=-2.781ns @ 100MHz,
-# fixed by dropping to 50MHz -- see gen_bd_hw.tcl's comment). Applying the
-# same fix here rather than re-deriving it from scratch.
+# fixed by dropping to 50MHz -- see gen_bd_hw.tcl's comment).
 #
 # The output port keeps the name clk_100MHz_o (matches clk_wiz_0's port
 # declaration in gemm_top_pynq_pl_wrapper.vhd) even though it now actually
@@ -70,8 +75,8 @@ generate_ip_run "jtag_axi_0"
 ########################
 create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi_crossbar_0
 set_property -dict [list \
-    CONFIG.NUM_SI {2} \
-    CONFIG.NUM_MI {4} \
+    CONFIG.NUM_SI $gemm_crossbar_num_si \
+    CONFIG.NUM_MI $gemm_crossbar_num_mi \
     CONFIG.PROTOCOL {AXI4LITE} \
     CONFIG.ADDR_WIDTH {32} \
     CONFIG.M00_A00_BASE_ADDR {0x00000000} \

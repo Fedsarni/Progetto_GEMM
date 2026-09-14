@@ -1,19 +1,11 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Author: Federica Sarnataro
+-- Module Name: gemm_top - Structural 
+-- Description: Top-level GEMM accelerator (Tier 1). AXI4-Lite slave for
+--   control (start/done, base addresses of A/B/C) plus an AXI master to
+--   fetch A/B and write C in memory. Computes C = A x B via gemm_controller
+--   (sequencing), lsu (SRAM addressing) and the dot_product datapath.
 -- 
--- Design Name: 
--- Module Name: gemm_controller - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
 
@@ -32,7 +24,7 @@ entity gemm_top is
         C_S_AXI_ADDR_WIDTH : positive := 32;  
         C_S_AXI_DATA_WIDTH : positive := 32;
 
-        C_M_AXI_ADDR_WIDTH : positive := 32;  -- M_AXI: access to A/B/C in memory
+        C_M_AXI_ADDR_WIDTH : positive := 32; 
         C_M_AXI_DATA_WIDTH : positive := 32
     );
     port (
@@ -209,11 +201,11 @@ begin
             DATA_WIDTH => ROW_WIDTH
         )
         port map (
-            lsu_en_i    => mem_req,         -- was dp_start; see note above CTRL_REGS_INST
+            lsu_en_i    => mem_req,         
             addr_idx_i  => cont_i,
-            sram_addr_o => bram_a_addr_o,   -- straight to the new output port
-            sram_cs_o   => bram_a_en_o,     -- straight to the new output port
-            data_in_i   => bram_a_rdata_i,  -- data now comes from outside gemm_top
+            sram_addr_o => bram_a_addr_o,   
+            sram_cs_o   => bram_a_en_o,    
+            data_in_i   => bram_a_rdata_i, 
             data_out_o  => vector_a
         );
  
@@ -311,14 +303,14 @@ begin
             base_addr_b_i => base_addr_b,
             base_addr_c_i => base_addr_c,
 
-            req_ab_i   => bram_a_en_o,   -- = mem_req (LSU_A/B passthrough)
+            req_ab_i   => bram_a_en_o,   
             idx_a_i    => cont_i,
             idx_b_i    => cont_j,
             vector_a_o => bram_a_rdata_i,
             vector_b_o => bram_b_rdata_i,
             ab_valid_o => ab_valid,
 
-            req_c_i   => bram_c_en_o,    -- = write_en (LSU_C passthrough)
+            req_c_i   => bram_c_en_o,    
             idx_c_i   => sram_c_index,
             wdata_c_i => bram_c_wdata_o,
             c_done_o  => c_done

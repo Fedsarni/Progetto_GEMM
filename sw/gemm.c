@@ -1,4 +1,5 @@
 /*
+ * Author: Federica Sarnataro
  * gemm.c
  *
  * Tier 3 driver for the GEMM accelerator -- see gemm.h for the address
@@ -69,3 +70,8 @@ void gemm_wait_done(void) {
         /* polling */
     }
 }
+
+/* Normally provided by the toolchain's crti.o/crtn.o, excluded here by
+ * -nostartfiles. */
+void _init(void) {}
+void _fini(void) {}

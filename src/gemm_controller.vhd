@@ -1,20 +1,13 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 07/20/2026 08:10:43 AM
--- Design Name: 
+-- Author: Federica Sarnataro
 -- Module Name: gemm_controller - Behavioral
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+-- Description: Converts a matrix element index into an SRAM address
+--   (binary encoding), drives the SRAM chip-select from the enable
+--   input, and passes data through between the SRAM and the datapath
+--   (combinational, no internal state).
 -- 
 ----------------------------------------------------------------------------------
 

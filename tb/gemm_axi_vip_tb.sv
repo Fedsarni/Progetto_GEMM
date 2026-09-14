@@ -1,4 +1,4 @@
-// Author: Federica
+// Author: Federica Sarnataro
 // Description:
 //   Simulation testbench for the GEMM AXI-lite design (Tier 3, using the
 //   AXI VIP master agent). Loads matrices A and B into their BRAMs via

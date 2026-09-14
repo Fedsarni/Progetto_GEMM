@@ -1,12 +1,9 @@
 ----------------------------------------------------------------------------------
--- Company:
--- Engineer:
+-- Author: Federica Sarnataro
 --
--- Module Name: axi4lite_ctrl_regs - Behavioral
 -- Description:
---   AXI4-Lite (S_AXI) control register block for gemm_top. Replaces the old
---   "bare" start_i/done_o and the future axi_gpio: exposes a register map
---   with start/done plus the base addresses of A/B/C in memory, which the
+--   AXI4-Lite (S_AXI) control register block for gemm_top: exposes
+--   start/done plus the base addresses of A/B/C in memory, which the
 --   M_AXI engine needs to know where to read/write the matrices.
 --
 --   Register map (32-bit word, byte offset):
@@ -15,9 +12,7 @@
 --     0x08  BASE_ADDR_A  base address of A
 --     0x0C  BASE_ADDR_B  base address of B
 --     0x10  BASE_ADDR_C  base address of C
---
--- Revision:
--- Revision 0.01 - File Created
+
 ----------------------------------------------------------------------------------
 
 library ieee;
@@ -181,15 +176,6 @@ begin
     ----------------------------------------------------------------------
     -- Latches the done_i pulse into a stable level
     ----------------------------------------------------------------------
-    ----------------------------------------------------------------------
-    -- Debug only: prints when done_i (the raw pulse from gemm_controller)
-    -- or done_latched change, to see exactly where the signal gets lost
-    ----------------------------------------------------------------------
-    DONE_DEBUG: process(done_i, done_latched)
-    begin
-        report "axi4lite_ctrl_regs: done_i=" & std_logic'image(done_i) &
-               " done_latched=" & std_logic'image(done_latched);
-    end process DONE_DEBUG;
 
     DONE_LATCH_PROC: process(clk_i)
     begin
@@ -223,10 +209,6 @@ begin
                     axi_arready    <= '1';
                     rvalid_pending <= '1'; -- RVALID follows one cycle later, not now
 
-                    report "axi4lite_ctrl_regs: READ request, araddr=" &
-                           integer'image(to_integer(unsigned(s_axi_araddr))) &
-                           " masked=" & integer'image(to_integer(unsigned(s_axi_araddr(4 downto 0)))) &
-                           " done_latched=" & std_logic'image(done_latched);
 
                     case to_integer(unsigned(s_axi_araddr(4 downto 0))) is
                         when 4 =>       -- ADDR_STATUS

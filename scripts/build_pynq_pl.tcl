@@ -1,4 +1,4 @@
-# Author: Federica
+# Author: Federica Sarnataro
 # Description:
 #   Create a Vivado project for GEMM - PYNQ-Z1 PL-ONLY TARGET.
 #   Performs Synthesis, Implementation and Bitstream Generation.

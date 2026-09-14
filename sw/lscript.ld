@@ -1,3 +1,14 @@
+/*
+ * lscript.ld
+ * Author: Federica Sarnataro
+ *
+ * Linker script for the PS+PL bare-metal C application (Cortex-A9,
+ * standalone). Written by hand following the standard Xilinx template
+ * for this architecture, rather than generated via "lscript generate":
+ * that command requires the rdi_vitis backend, which isn't reachable
+ * from a pure command-line flow (see xsct timeout when invoked without
+ * the Vitis IDE entry point).
+ */
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x2000;
 _HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x2000;
 _IRQ_STACK_SIZE = DEFINED(_IRQ_STACK_SIZE) ? _IRQ_STACK_SIZE : 0x100;

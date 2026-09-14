@@ -1,48 +1,16 @@
 ----------------------------------------------------------------------------------
--- Author: Federica
+-- Author: Federica Sarnataro
 -- Module Name: gemm_top_pynq_pl_wrapper - structural
 -- Description:
 --   [Tier 2] Pynq-Z1 (Zynq-7020) PL-only hardware wrapper for gemm_top:
 --   DUT + JTAG-to-AXI Master (host-driven AXI4-Lite master, replaces the
 --   AXI VIP used in gemm_top_sim_wrapper) + AXI crossbar + BRAM A/B/C, same
 --   0x0000/0x1000/0x2000/0x3000 address map as the simulation wrapper.
---   Follows the "Synthesis wrapper" / testharness pattern of the internal
---   RTL Coding/Design/Verification guide (Tier 2, [Tier 3] Stimuli
---   Generation via JTAG to AXI Master + host TCL script).
---
---   WARNING - dirty workaround, not for production (see relator's example
---   counter_top_PynqZ1_workaround.vhd and "Designing with Zynq Platforms"
---   slides):
---     The PS is never started on this target (no block design, no
---     processing_system7_0), so the usual PS-provided clock/reset for the
---     PL is unavailable and Xilinx additionally hides the FPGA's power-on
---     reset pin from plain-PL designs. As a workaround, this wrapper uses
---     a clocking wizard's `locked` output port as the system reset
---     (active-high locked => active-high pl_resetn... NOTE: locked is
---     high once the MMCM/PLL is locked, so it behaves as an *active-high*
---     "ready" signal, and pl_resetn below is therefore used as an
---     active-high reset released after lock -- see reset polarity note at
---     the reset_i assignment).
---     This only works because the design has a single clock and a single
---     reset. `locked` is a regular combinational/glitchy net, not a
---     dedicated reset network: it can force a synchronous reset and
---     possibly asynchronous connections, over-constrain the design and
---     complicate timing closure, and cause other unexpected behaviour.
---     Do not reuse this pattern for a design with multiple clocks/resets.
---
---   IP instantiation uses "component ... end component" (implicit/default
---   binding), matching gemm_top_sim_wrapper's Revision 0.02 note: explicit
---   "entity work.X" binding on Tcl-generated IP reproducibly crashed the
---   XSim kernel in this project. gemm_top itself is still instantiated via
---   "entity work.gemm_top" (plain project RTL, not Tcl-generated IP).
 --
 --   Shared IP (crossbar, 3x AXI BRAM ctrl, 3x blk_mem_gen) is declared once
 --   in gemm_axi_ip_components_pkg and reused here unmodified; only the
 --   master (JTAG-to-AXI here, AXI VIP in the sim wrapper) and the
 --   clock/reset generation are wrapper-specific.
---
--- Revision:
--- Revision 0.01 - File Created
 ----------------------------------------------------------------------------------
 
 library ieee;
@@ -286,7 +254,7 @@ architecture structural of gemm_top_pynq_pl_wrapper is
 begin
 
     ----------------------------------------------------------------------
-    -- Clock / reset workaround (see WARNING in file header)
+    -- Clock / reset workaround 
     ----------------------------------------------------------------------
     CLK_GEN_INST : clk_wiz_0
         port map (
@@ -616,7 +584,7 @@ begin
         );
 
     ----------------------------------------------------------------------
-    -- gemm_top (Tier 1, unchanged)
+    -- gemm_top (Tier 1)
     ----------------------------------------------------------------------
     GEMM_TOP_INST: entity work.gemm_top
         generic map (

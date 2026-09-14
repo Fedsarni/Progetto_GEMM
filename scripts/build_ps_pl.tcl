@@ -1,11 +1,12 @@
-# scripts/hw/build_ps_pl.tcl
+# Author: Federica Sarnataro
+# scripts/build_ps_pl.tcl
 #
 # Builds the GEMM PS+PL target end to end: project creation, block design
 # (gemm_top imported as a plain RTL module reference -- no IP packaging
-# needed, unlike the Fase A GPIO test), synthesis, implementation,
-# bitstream, and hardware export (.xsa) for Vitis/xsct.
+# needed), synthesis, implementation, bitstream, and hardware export
+# (.xsa) for Vitis/xsct.
 #
-# Run from the project root (GEMM_PS_PL/):
+# Run from the project root:
 #   vivado -mode batch -source scripts/build_ps_pl.tcl
 
 set proj_dir   [pwd]

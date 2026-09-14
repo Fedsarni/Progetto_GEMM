@@ -1,3 +1,4 @@
+# Author: Federica Sarnataro
 # scripts/program_and_test_ps_pl.ps1
 #
 # End-to-end HIL automation for the PS+PL target: generates the BSP,
@@ -67,15 +68,12 @@ if ($LASTEXITCODE -ne 0) { Fail "Compiling main.c failed" }
 & $GCC -c $commonFlags.Split(" ") -I $bspInclude .\sw\gemm.c -o .\sw\gemm.o
 if ($LASTEXITCODE -ne 0) { Fail "Compiling gemm.c failed" }
 
-& $GCC -c $commonFlags.Split(" ") -I $bspInclude .\sw\platform.c -o .\sw\platform.o
-if ($LASTEXITCODE -ne 0) { Fail "Compiling platform.c failed" }
-
 $linkArgs = @(
     "-mcpu=cortex-a9", "-mfpu=vfpv3", "-mfloat-abi=hard", "-nostartfiles",
     "-Wl,-T", "-Wl,.\sw\lscript.ld",
     "-L", $bspLib,
     "-o", ".\sw\main.elf",
-    ".\sw\main.o", ".\sw\gemm.o", ".\sw\platform.o",
+    ".\sw\main.o", ".\sw\gemm.o",
     "-Wl,--start-group", "-lxil", "-lgcc", "-lc", "-Wl,--end-group"
 )
 & $GCC @linkArgs

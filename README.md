@@ -56,18 +56,23 @@ scripts on every run.
   **Tier 3** for simulation. Shared by both platforms, since it only
   exercises Tier 1.
 - **`sw/`**: bare-metal C sources for the PS+PL target's Tier 3
-  (`main.c`, `gemm.c`/`gemm.h`, `platform.c`/`platform.h`,
-  `lscript.ld`) -- the PS-side stimuli generator and HIL test suite,
-  compiled with `arm-none-eabi-gcc` (no Vitis IDE/`app create` involved).
+  (`main.c`, `gemm.c`/`gemm.h`, `lscript.ld`) -- the PS-side stimuli
+  generator and HIL test suite, compiled with `arm-none-eabi-gcc` (no
+  Vitis IDE/`app create` involved).
 - **`scripts/`**: Modular Tcl (and PowerShell, for PS+PL) automation --
   generate IPs, build the project, run simulation, build the bitstream,
   run the HIL test, for both platforms.
-  * PL-only: `build_pynq_pl.tcl`, `program_and_test_pynq_pl.tcl`.
+  * PL-only: `build_pynq_pl.tcl`, `ip/gen_ip_pynq_pl.tcl` (standalone
+    IP generation), `program_and_test_pynq_pl.tcl`.
   * PS+PL: `build_ps_pl.tcl` (project + block design + bitstream + `.xsa`
     export), `bd/gen_bd_ps.tcl` (the block design itself: PS7 + AXI3→
     AXI4-Lite protocol converter + crossbar + BRAMs + `gemm_top`),
     `program_and_test_ps_pl.ps1` (end-to-end HIL: BSP generation,
     software build, board programming, UART result capture).
+  * `bd/tier2_config.tcl`: BRAM sizing, crossbar port count, and address
+    offsets shared between the PL-only and PS+PL IP/BD generation
+    scripts -- the only genuinely duplicated numbers between the two
+    targets, kept in one place (mechanism stays different per target).
 - **`xdc/`**: Physical constraints for the Pynq-Z1 (clock, reset) --
   PL-only only; PS+PL needs no physical pin constraints, all
   communication is internal AXI between PS and PL.

@@ -1,6 +1,5 @@
 ----------------------------------------------------------------------------------
--- Company:
--- Engineer:
+--Author: Federica Sarnataro
 --
 -- Module Name: axi_master_engine - Behavioral
 -- Description:
@@ -21,9 +20,7 @@
 --   sequential FSM), so req_ab_i and req_c_i are never both asserted at
 --   the same time -- a single shared FSM is enough here, no real
 --   arbitration between the two paths is needed.
---
--- Revision:
--- Revision 0.01 - File Created
+
 ----------------------------------------------------------------------------------
 
 library ieee;
@@ -163,14 +160,7 @@ begin
     ab_valid_o <= ab_valid_reg;
     c_done_o   <= c_done_reg;
 
-    ----------------------------------------------------------------------
-    -- Just prints every state change to the Tcl Console -- doesn't touch
-    -- or affect the real logic above in any way, purely for debugging
-    ----------------------------------------------------------------------
-    STATE_MONITOR: process(state_q)
-    begin
-        report "axi_master_engine: state_q = " & state_t'image(state_q);
-    end process STATE_MONITOR;
+    
 
     ----------------------------------------------------------------------
     MAIN_PROC: process(clk_i)

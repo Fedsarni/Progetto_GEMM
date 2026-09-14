@@ -1,20 +1,16 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 07/06/2026 08:51:13 PM
--- Design Name: 
+-- Author: Federica Sarnataro
 -- Module Name: dot_product_optimized - Behavioral
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
--- Description: 
+-- Description: Computes the dot product of two LENGTH-element vectors
+--   (DATA_WIDTH bits each) using a K_PARALLEL=4-wide multiply-accumulate
+--   tree: 4 multipliers per cycle, 2-stage adder tree, accumulated across
+--   NUM_SLICES = LENGTH/K_PARALLEL cycles. FSM: IDLE -> LOAD -> COMPUTE
+--   (loops until all slices processed) -> DONE.
 -- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+
 -- 
 ----------------------------------------------------------------------------------
 
@@ -82,7 +78,7 @@ architecture Behavioral of dot_product_optimized is
     signal tree_output  : signed(ACC_WIDTH-1 downto 0); 
     
     --next_acc = tree_output + acc_q
-    signal next_acc     : signed(ACC_WIDTH-1 downto 0); -- Uscita dell'addizionatore extra
+    signal next_acc     : signed(ACC_WIDTH-1 downto 0); -- output of the extra adder
 
      
  
