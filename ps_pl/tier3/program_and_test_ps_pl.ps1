@@ -1,4 +1,3 @@
-# Author: Federica Sarnataro
 # scripts/program_and_test_ps_pl.ps1
 #
 # End-to-end HIL automation for the PS+PL target: generates the BSP,
@@ -19,7 +18,7 @@ $GCC  = "C:\AMDDesignTools\2025.2\gnu\aarch32\nt\gcc-arm-none-eabi\bin\arm-none-
 # escape character, silently eating "\g", "\w", etc. from Windows paths.
 $XSA  = "./gemm_ps_pl.xsa"
 $WORKSPACE = "./workspace"
-$SERIAL_PORT_NAME = "COM4"
+$SERIAL_PORT_NAME = $null  # auto-detected below
 $SERIAL_TIMEOUT_SEC = 30
 
 function Fail($msg) {
@@ -79,7 +78,17 @@ $linkArgs = @(
 & $GCC @linkArgs
 if ($LASTEXITCODE -ne 0) { Fail "Linking main.elf failed" }
 
-# --- 3. Open the serial port BEFORE programming, so no output is lost --
+# --- 3. Auto-detect and open the serial port BEFORE programming, so no --
+#        output is lost. The Pynq-Z1's FTDI chip shows up as "USB Serial
+#        Port (COMx)" -- COM number differs per machine/USB port, so we
+#        look it up instead of hardcoding it.
+$comDevice = Get-CimInstance Win32_PnPEntity | Where-Object { $_.Name -match "USB Serial Port \((COM\d+)\)" } | Select-Object -First 1
+if (-not $comDevice) {
+    Fail "No 'USB Serial Port (COMx)' device found -- is the Pynq-Z1 connected and powered on?"
+}
+$SERIAL_PORT_NAME = $matches[1]
+Write-Host "[INFO] Using serial port: $SERIAL_PORT_NAME"
+
 $port = New-Object System.IO.Ports.SerialPort $SERIAL_PORT_NAME, 115200, "None", 8, "One"
 try {
     $port.Open()
@@ -108,7 +117,7 @@ source $ps7InitTcl
 ps7_init
 ps7_post_config
 targets -set -filter {name =~ "ARM Cortex-A9 MPCore #0"}
-dow ./sw/main.elf
+dow ./ps_pl/tier3/main.elf
 con
 exit
 "@
