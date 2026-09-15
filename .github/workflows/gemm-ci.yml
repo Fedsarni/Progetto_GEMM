@@ -46,7 +46,7 @@ jobs:
         with:
           name: bitstream
       - name: HIL test (JTAG-to-AXI, board Pynq-Z1)
-        run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source scripts/program_and_test_pynq_pl.tcl'
+        run: '& "${{ env.VIVADO_EXEC }}" -mode batch -source pl_only/tier3/program_and_test_pynq_pl.tcl'
 
   # ======================= PS+PL =======================
 
@@ -77,4 +77,4 @@ jobs:
           name: bitstream-ps-pl
       - name: HIL test (PS bare-metal, board Pynq-Z1)
         shell: powershell
-        run: '.\scripts\program_and_test_ps_pl.ps1'
+        run: '.\ps_pl\tier3\program_and_test_ps_pl.ps1'
